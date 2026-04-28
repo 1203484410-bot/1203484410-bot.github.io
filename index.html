@@ -6,6 +6,8 @@
     <title>玻利瓦尔生态观测站 | 保护生物多样性</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,7 +17,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fefefe;
+            background-color: #fafaf8;
             color: #1a2a2a;
             line-height: 1.5;
             min-height: 100vh;
@@ -27,17 +29,34 @@
             max-width: 1280px;
             width: 100%;
             margin: 0 auto;
-            padding: 0 2rem;
+            padding: 0 2.5rem;
             flex: 1;
         }
 
+        /* 导航栏固定 */
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 1.2rem 0;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #d0dcd6;
             flex-wrap: wrap;
+            background: #fafaf8;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            left: 0;
+            right: 0;
+            padding: 1.2rem 2.5rem;
+        }
+        @media (max-width: 800px) {
+            .navbar {
+                padding-left: 1.2rem;
+                padding-right: 1.2rem;
+            }
         }
         .logo h2 {
             font-weight: 600;
@@ -65,19 +84,25 @@
             text-decoration: none;
             color: #2d4a4a;
             font-weight: 500;
-            transition: 0.2s;
+            transition: all 0.2s ease;
             cursor: pointer;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
         }
-        .nav-links a:hover, .nav-links .active a {
+        .nav-links a:hover {
+            color: #1e6f5c;
+            border-bottom-color: #1e6f5c;
+        }
+        .nav-links .active a {
             color: #1e6f5c;
             border-bottom: 2px solid #1e6f5c;
-            padding-bottom: 4px;
         }
 
         .page {
             display: none;
             animation: fadeIn 0.3s ease;
             width: 100%;
+            min-height: 60vh;
         }
         .page.active-page {
             display: block;
@@ -87,65 +112,194 @@
             to { opacity: 1; transform: translateY(0);}
         }
 
-        .hero {
+        /* 轮播卡片 */
+        .carousel-container {
+            position: relative;
+            margin: 2rem 0;
+        }
+        .carousel-slides {
+            position: relative;
+            height: 420px;
+            border-radius: 32px;
+            background: white;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.02);
+            border: 1px solid #e8efe8;
+            overflow: hidden;
+        }
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            background: white;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        .hero-content {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            justify-content: space-between;
-            padding: 3rem 0 2rem;
             gap: 2rem;
+            height: 100%;
         }
         .hero-text {
             flex: 1;
         }
         .hero-text h1 {
-            font-size: 2.5rem;
+            font-size: 1.9rem;
             font-weight: 700;
-            line-height: 1.2;
             color: #0e2c2c;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
         .hero-text p {
-            font-size: 1.1rem;
-            color: #3f6565;
-            max-width: 550px;
+            color: #4a6a6a;
+            line-height: 1.4;
+        }
+        .btn {
+            background: #1e6f5c;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 48px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-weight: 500;
+            transition: 0.2s;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #0e4f40;
         }
         .hero-image {
             flex: 1;
-            background: #d9e6e2;
-            border-radius: 28px;
-            padding: 2rem;
+            background: #ecf3ef;
+            border-radius: 24px;
+            padding: 1.5rem;
             text-align: center;
             color: #2c6e5e;
-            font-size: 0.9rem;
-            box-shadow: 0 12px 24px -12px rgba(0,0,0,0.1);
         }
-        .btn {
-            display: inline-block;
-            background: #1e6f5c;
-            color: white;
-            padding: 0.8rem 1.6rem;
-            border-radius: 48px;
-            text-decoration: none;
+        .partner-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+        .partner-item {
+            background: #fafefc;
+            border-radius: 20px;
+            padding: 0.8rem 1rem;
+            text-align: center;
+            width: 130px;
+            border: 1px solid #dfeae5;
+        }
+        .partner-item i {
+            font-size: 2rem;
+            color: #2c8b76;
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+        .partner-item span {
+            font-size: 0.8rem;
             font-weight: 500;
-            margin-top: 1.5rem;
-            transition: 0.2s;
-            border: none;
-            cursor: pointer;
+            color: #1e4a3e;
         }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #1e6f5c;
+        .partner-item small {
+            font-size: 0.7rem;
+            color: #618b7e;
+            display: block;
+        }
+        .ad-card {
+            text-align: center;
+            background: linear-gradient(135deg, #ffffff, #f4f9f5);
+            border-radius: 28px;
+            padding: 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid #e0ede8;
+        }
+        .ad-card i {
+            font-size: 4rem;
+            color: #2c8b76;
+            margin-bottom: 1rem;
+        }
+        .ad-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
             color: #1e6f5c;
         }
-        .btn-outline:hover {
-            background: #1e6f5c10;
+        .ad-card p {
+            color: #4a6a6a;
+            max-width: 400px;
+            margin: 0 auto;
         }
+        .carousel-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #cbdcd6;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .dot.active {
+            background: #1e6f5c;
+            width: 24px;
+            border-radius: 12px;
+        }
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(44, 139, 118, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(44, 139, 118, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c6e5e;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+        .arrow:hover {
+            background: rgba(44, 139, 118, 0.4);
+        }
+        .carousel-container:hover .arrow {
+            opacity: 1;
+        }
+        .arrow-left { left: 15px; }
+        .arrow-right { right: 15px; }
+
+        /* 重点研究方向 */
         .section-title {
             font-size: 1.8rem;
             font-weight: 600;
             margin: 3rem 0 1.5rem;
             color: #1f423b;
+            border-left: 4px solid #2c8b76;
+            padding-left: 1rem;
         }
         .cards {
             display: grid;
@@ -155,11 +309,15 @@
         }
         .card {
             background: white;
-            border-radius: 24px;
+            border-radius: 28px;
             padding: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.03);
-            border: 1px solid #ecf3f0;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2ede8;
             transition: all 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.08);
         }
         .card i {
             font-size: 2rem;
@@ -170,13 +328,14 @@
             font-size: 1.25rem;
             margin-bottom: 0.5rem;
             font-weight: 600;
+            color: #1e5a4a;
         }
         .card p {
-            color: #527a7a;
+            color: #5a7c72;
             font-size: 0.9rem;
         }
 
-        /* 竖向滚动新闻列表 */
+        /* 研究动态 */
         .news-list-vertical {
             display: flex;
             flex-direction: column;
@@ -199,18 +358,23 @@
         }
         .news-card {
             background: white;
-            border: 1px solid #ecf3f0;
-            border-radius: 20px;
+            border: 1px solid #e2ede8;
+            border-radius: 24px;
             padding: 1rem;
-            width: 100%;
-            white-space: normal;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            cursor: pointer;
             transition: 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .news-card:hover {
+            border-color: #2c8b76;
+            background: #fcfefc;
+            transform: translateX(2px);
         }
         .news-card strong {
             font-size: 0.9rem;
             display: block;
             margin-bottom: 0.5rem;
+            color: #1e4a3e;
         }
         .news-card .news-desc {
             font-size: 0.75rem;
@@ -219,11 +383,12 @@
         }
         .news-card .news-date {
             font-size: 0.7rem;
-            color: #4c8a7a;
+            color: #7c9e92;
             font-weight: 500;
             margin-top: 0.5rem;
         }
 
+        /* 研究项目页 */
         .project-list {
             display: flex;
             flex-direction: column;
@@ -231,13 +396,53 @@
             margin: 2rem 0;
         }
         .project-card {
-            background: #f9fdfb;
+            background: #fafefc;
             border-left: 4px solid #2c8b76;
             padding: 1.2rem 1.5rem;
             border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .partner-card {
+            background: #f4f9f6;
+            border-radius: 28px;
+            padding: 1.5rem;
+            margin: 2rem 0 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            border: 1px solid #dcebe5;
+        }
+        .partner-info h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+            color: #1e6f5c;
+        }
+        .partner-info p {
+            font-size: 0.85rem;
+            color: #4a6a6a;
+        }
+        .partner-link .btn-outline {
+            background: transparent;
+            border: 1px solid #1e6f5c;
+            color: #1e6f5c;
+            padding: 0.5rem 1.2rem;
+            border-radius: 48px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.1s;
+            display: inline-block;
+        }
+        .partner-link .btn-outline:active {
+            background: #1e6f5c;
+            color: white;
+            transform: scale(0.97);
         }
 
-        /* 数据资源页图标统一风格 */
+        /* 数据资源页 */
         .dataset-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -245,43 +450,142 @@
             margin: 2rem 0;
         }
         .dataset-item {
-            background: #f9fdfb;
-            border-radius: 20px;
+            background: white;
+            border-radius: 24px;
             padding: 1.2rem;
             text-align: center;
+            border: 1px solid #e2ede8;
         }
         .dataset-item i {
             font-size: 2rem;
             color: #2c8b76;
             margin-bottom: 0.8rem;
             display: inline-block;
-            width: 2rem;
-            height: 2rem;
-            line-height: 1;
+        }
+        .data-btn {
+            background: transparent;
+            border: 1px solid #1e6f5c;
+            color: #1e6f5c;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+            transition: 0.1s;
+            margin-top: 0.5rem;
+        }
+        .data-btn:active {
+            background: #1e6f5c;
+            color: white;
+            transform: scale(0.97);
         }
 
+        /* 地图 */
+        .map-card {
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            margin: 2rem 0;
+            border: 1px solid #e0ede8;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+        }
+        #map {
+            height: 350px;
+            width: 100%;
+        }
+        .map-caption {
+            padding: 0.8rem 1rem;
+            background: #f4f9f7;
+            font-size: 0.75rem;
+            color: #5a7c72;
+            text-align: center;
+            border-top: 1px solid #e0ede8;
+        }
+
+        /* 团队 */
         .team-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 2rem;
             margin: 2rem 0;
         }
         .member-card {
+            background: white;
+            border-radius: 28px;
+            padding: 1.5rem;
             text-align: center;
+            border: 1px solid #e2ede8;
         }
-        .member-avatar {
+        .member-card img {
             width: 120px;
             height: 120px;
-            background: #d9e6e2;
             border-radius: 50%;
+            object-fit: cover;
             margin: 0 auto 1rem;
+            display: block;
+            border: 2px solid #d0e2db;
+        }
+        .double-green {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #d0e6de;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .inner-green {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #2c8b76;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-size: 3rem;
-            color: #2c6e5e;
+        }
+        .gray-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #eef2f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: #8aa8a0;
+            font-size: 3rem;
+            border: 1px solid #d8e2dc;
+        }
+        .member-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            color: #1e4a3e;
+        }
+        .member-card .title {
+            font-size: 0.85rem;
+            color: #5a7c72;
+            margin-bottom: 0.2rem;
+        }
+        .member-card .year {
+            font-size: 0.7rem;
+            color: #c77a6e;
+            margin-top: 0.4rem;
+        }
+        .member-card .small-note {
+            font-size: 0.7rem;
+            color: #8aa8a0;
+        }
+        .member-card .recruit {
+            font-size: 0.7rem;
+            color: #1e6f5c;
+            margin-top: 0.4rem;
         }
 
+        /* 联系 */
         .contact-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -298,19 +602,32 @@
             width: 100%;
             padding: 0.8rem;
             margin-bottom: 1rem;
-            border: 1px solid #cbdcd6;
-            border-radius: 20px;
+            border: 1px solid #d4e2da;
+            border-radius: 24px;
             font-family: inherit;
             background: white;
+            transition: 0.1s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #2c8b76;
+            box-shadow: 0 0 0 2px rgba(44, 139, 118, 0.1);
+        }
+        textarea {
+            resize: none;
+        }
+
+        .page-bottom-spacer {
+            height: 3rem;
         }
 
         footer {
-            background: #f4f9f7;
+            background: #eef4f0;
             margin-top: 4rem;
             padding: 2rem 0;
             text-align: center;
             border-top: 1px solid #dcebe5;
-            color: #4f6f6f;
+            color: #5a7c72;
             font-size: 0.85rem;
             cursor: pointer;
         }
@@ -322,43 +639,52 @@
             padding-top: 1rem;
         }
 
-        /* 普通弹窗样式 */
-        .simple-dialog {
+        /* 模态框 */
+        .news-modal, .simple-dialog {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10000;
         }
-        .simple-dialog-box {
-            background: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            width: 320px;
-            max-width: 85%;
-            padding: 1.2rem;
-            font-family: 'Inter', system-ui, sans-serif;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            color: #1e2a2a;
+        .news-modal-box, .simple-dialog-box {
+            background: white;
+            border-radius: 32px;
+            width: 500px;
+            max-width: 90%;
+            padding: 1.8rem;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.2);
+            border: 1px solid #e0ede8;
+            position: relative;
+        }
+        .news-modal-box h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: #1e6f5c;
+            padding-right: 2rem;
+        }
+        .news-modal-box .modal-date {
+            font-size: 0.7rem;
+            color: #7c9e92;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e0ede8;
+            padding-bottom: 0.5rem;
+        }
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1.2rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #8aa8a0;
         }
         .simple-dialog-box p {
-            margin: 0 0 1rem 0;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        .simple-dialog-box input {
-            width: 100%;
-            padding: 0.5rem;
             margin-bottom: 1rem;
-            border: 1px solid #bbb;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-family: inherit;
         }
         .simple-dialog-buttons {
             display: flex;
@@ -370,202 +696,155 @@
             border: 1px solid #ccc;
             border-radius: 20px;
             padding: 0.3rem 0.8rem;
-            font-size: 0.8rem;
             cursor: pointer;
-            font-family: inherit;
-            color: #1e2a2a;
-        }
-        .simple-dialog-buttons button:hover {
-            background: #d4d4d4;
         }
         .simple-dialog-buttons .confirm-btn {
             background: #1e6f5c;
             border-color: #1e6f5c;
             color: white;
         }
-        .simple-dialog-buttons .confirm-btn:hover {
-            background: #155a4a;
-        }
 
         @media (max-width: 800px) {
-            .navbar {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-            .nav-links {
-                flex-wrap: wrap;
-                gap: 1rem;
-            }
-            .hero-text h1 {
-                font-size: 1.9rem;
-            }
-            .container {
-                padding: 0 1.2rem;
-            }
-            .news-card {
-                width: 100%;
-            }
+            .container { padding: 0 1.2rem; }
+            .navbar { padding-left: 1.2rem; padding-right: 1.2rem; }
+            .nav-links { flex-wrap: wrap; gap: 1rem; }
+            .carousel-slides { height: 520px; }
+            .hero-content { flex-direction: column; text-align: center; }
+            .partner-grid { gap: 0.8rem; }
+            .partner-item { width: 100px; }
+            .ad-card h3 { font-size: 1.4rem; }
+            .arrow { width: 32px; height: 32px; }
+            #map { height: 250px; }
+            .member-card img, .double-green, .gray-placeholder { width: 90px; height: 90px; }
+            .inner-green { width: 72px; height: 72px; font-size: 2.2rem; }
         }
     </style>
 </head>
 <body>
+<div class="navbar">
+    <div class="logo">
+        <h2>🌿 OEV · 玻利瓦尔生态观测站</h2>
+        <p>Observatorio Ecológico de Bolívar</p>
+    </div>
+    <ul class="nav-links">
+        <li class="nav-item" data-page="home"><a href="#home">首页</a></li>
+        <li class="nav-item" data-page="projects"><a href="#projects">研究项目</a></li>
+        <li class="nav-item" data-page="data"><a href="#data">数据资源</a></li>
+        <li class="nav-item" data-page="team"><a href="#team">团队</a></li>
+        <li class="nav-item" data-page="contact"><a href="#contact">联系</a></li>
+    </ul>
+</div>
 
 <div class="container">
-    <div class="navbar">
-        <div class="logo">
-            <h2>🌿 OEV · 玻利瓦尔生态观测站</h2>
-            <p>Observatorio Ecológico de Bolívar</p>
-        </div>
-        <ul class="nav-links">
-            <li class="nav-item" data-page="home"><a href="#home">首页</a></li>
-            <li class="nav-item" data-page="projects"><a href="#projects">研究项目</a></li>
-            <li class="nav-item" data-page="data"><a href="#data">数据资源</a></li>
-            <li class="nav-item" data-page="team"><a href="#team">团队</a></li>
-            <li class="nav-item" data-page="contact"><a href="#contact">联系</a></li>
-        </ul>
-    </div>
-
     <!-- 首页 -->
     <div id="home" class="page active-page">
-        <div class="hero">
-            <div class="hero-text">
-                <h1>保护原始森林生态<br>揭示自然演替规律</h1>
-                <p>玻利瓦尔生态观测站成立于2017年，专注于热带及亚热带原始森林的长期动态监测、生物多样性保护与生态系统服务研究。</p>
-                <a href="#" class="btn">查看年度报告 →</a>
+        <div class="carousel-container">
+            <div class="carousel-slides">
+                <div class="slide active">
+                    <div class="hero-content">
+                        <div class="hero-text">
+                            <h1>保护原始森林生态<br>揭示自然演替规律</h1>
+                            <p>玻利瓦尔生态观测站成立于2017年，专注于热带及亚热带原始森林的长期动态监测、生物多样性保护与生态系统服务研究。</p>
+                            <button class="btn" id="carouselAnnualBtn">查看年度报告 →</button>
+                        </div>
+                        <div class="hero-image">
+                            <i class="fas fa-seedling" style="font-size: 3rem; opacity: 0.7;"></i>
+                            <p>黑流河流域森林样地  © OEV 2026</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide">
+                    <div style="text-align: center; margin-bottom: 0.5rem;">
+                        <i class="fas fa-globe-americas" style="font-size: 2.2rem; color: #2c8b76;"></i>
+                        <h2 style="font-size: 1.5rem; margin: 0.2rem 0;">国际合作网络</h2>
+                        <p style="color: #5a7c72;">与全球科研机构共享数据、联合科考</p>
+                    </div>
+                    <div class="partner-grid">
+                        <div class="partner-item"><i class="fas fa-map-marker-alt"></i><span>国家地理学会</span><small>华盛顿 · 美国</small></div>
+                        <div class="partner-item"><i class="fas fa-map-marker-alt"></i><span>国际土壤参考中心</span><small>瓦赫宁根 · 荷兰</small></div>
+                        <div class="partner-item"><i class="fas fa-map-marker-alt"></i><span>亚马逊保护协会</span><small>利马 · 秘鲁</small></div>
+                        <div class="partner-item"><i class="fas fa-map-marker-alt"></i><span>玻利瓦尔大学</span><small>拉巴斯 · 玻利维亚</small></div>
+                    </div>
+                    <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #7c9e92;">此外与全球12个热带研究站建立数据共享协议</p>
+                </div>
+                <div class="slide">
+                    <div class="ad-card">
+                        <i class="fas fa-tree"></i>
+                        <h3>守护树海 · 即刻行动</h3>
+                        <p>每公顷原始森林每年吸收约200吨碳。加入我们的保护计划，支持可持续研究。</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #1e6f5c;">🌿 捐赠 · 志愿服务 · 传播知识</p>
+                    </div>
+                </div>
+                <button class="arrow arrow-left" id="prevSlideBtn">‹</button>
+                <button class="arrow arrow-right" id="nextSlideBtn">›</button>
             </div>
-            <div class="hero-image">
-                <i class="fas fa-seedling" style="font-size: 3rem; opacity: 0.7;"></i>
-                <p style="margin-top: 12px;">黑流河流域森林样地  © OEV 2026</p>
-            </div>
+            <div class="carousel-nav" id="dotsContainer"></div>
         </div>
+
         <h2 class="section-title">重点研究方向</h2>
         <div class="cards">
-            <div class="card">
-                <i class="fas fa-chart-line"></i>
-                <h3>碳汇动态监测</h3>
-                <p>基于地面激光雷达与卫星遥感，量化森林碳储量变化及气候响应机制。</p>
-            </div>
-            <div class="card">
-                <i class="fas fa-dna"></i>
-                <h3>植物-土壤微生物互作</h3>
-                <p>探索深层根系-真菌网络对养分循环的驱动作用。</p>
-            </div>
-            <div class="card">
-                <i class="fas fa-water"></i>
-                <h3>流域水文过程</h3>
-                <p>黑流河全流域水量平衡模型与极端降水事件影响评估。</p>
-            </div>
+            <div class="card"><i class="fas fa-chart-line"></i><h3>碳汇动态监测</h3><p>基于地面激光雷达与卫星遥感，量化森林碳储量变化及气候响应机制。</p></div>
+            <div class="card"><i class="fas fa-dna"></i><h3>植物-土壤微生物互作</h3><p>探索深层根系-真菌网络对养分循环的驱动作用。</p></div>
+            <div class="card"><i class="fas fa-water"></i><h3>流域水文过程</h3><p>黑流河全流域水量平衡模型与极端降水事件影响评估。</p></div>
         </div>
+
         <h2 class="section-title">研究动态</h2>
-        <!-- 竖向滚动新闻列表 -->
         <div class="news-list-vertical">
-            <div class="news-card">
-                <strong>野外考察：第4次黑流树海样地调查结束</strong>
-                <div class="news-desc">本次采集土壤样本47份，发现未知苔藓类群</div>
-                <div class="news-date">2026.04.15</div>
-            </div>
-            <div class="news-card">
-                <strong>关于废弃科考站重启的公开征询</strong>
-                <div class="news-desc">原梅兰德基金会观测点将移交至OEV管理</div>
-                <div class="news-date">2026.03.28</div>
-            </div>
-            <div class="news-card">
-                <strong>遥感数据揭示异常绿度指数上升</strong>
-                <div class="news-desc">树海西北部生物量年增幅达3.7%</div>
-                <div class="news-date">2026.03.10</div>
-            </div>
-            <div class="news-card">
-                <strong>生物声学网络初步成果发布</strong>
-                <div class="news-desc">记录到128种鸟类鸣声，其中3种疑似新记录</div>
-                <div class="news-date">2026.02.18</div>
-            </div>
-            <div class="news-card">
-                <strong>树海边缘土壤微生物多样性研究启动</strong>
-                <div class="news-desc">合作单位：国际土壤参考中心</div>
-                <div class="news-date">2026.01.22</div>
-            </div>
-            <div class="news-card">
-                <strong>年度开放数据竞赛获奖名单公布</strong>
-                <div class="news-desc">三等奖作品聚焦树海碳汇模型</div>
-                <div class="news-date">2025.12.10</div>
-            </div>
-            <div class="news-card">
-                <strong>树海档案解密：1101年“初始回声”事件再评估</strong>
-                <div class="news-desc">历史记录显示，1101年10月14日，树海发生首次有记载的意识回响异常。当地人称其为“一段被尘封的日子”。</div>
-                <div class="news-date">1101.10.14</div>
-            </div>
+            <div class="news-card" data-news="1"><strong>野外考察：第4次黑流树海样地调查结束</strong><div class="news-desc">采集土壤样本47份，发现未知苔藓类群</div><div class="news-date">2026.04.15</div></div>
+            <div class="news-card" data-news="2"><strong>关于废弃科考站重启的公开征询</strong><div class="news-desc">原梅兰德基金会观测点将移交至OEV管理</div><div class="news-date">2026.03.28</div></div>
+            <div class="news-card" data-news="3"><strong>遥感数据揭示异常绿度指数上升</strong><div class="news-desc">树海西北部生物量年增幅达3.7%</div><div class="news-date">2026.03.10</div></div>
+            <div class="news-card" data-news="4"><strong>生物声学网络初步成果发布</strong><div class="news-desc">记录到128种鸟类鸣声，其中3种疑似新记录</div><div class="news-date">2026.02.18</div></div>
+            <div class="news-card" data-news="5"><strong>树海边缘土壤微生物多样性研究启动</strong><div class="news-desc">合作单位：国际土壤参考中心</div><div class="news-date">2026.01.22</div></div>
+            <div class="news-card" data-news="6"><strong>年度开放数据竞赛获奖名单公布</strong><div class="news-desc">三等奖作品聚焦树海碳汇模型</div><div class="news-date">2025.12.10</div></div>
+            <div class="news-card" data-news="7"><strong>树海档案解密：1101年“初始回声”事件再评估</strong><div class="news-desc">历史记录显示，树海深处曾发生过一次意义不明的意识回响异常。当地人称其为“一段被尘封的日子”。新解密的档案提供了更多细节。</div><div class="news-date">2025.11.01</div></div>
         </div>
     </div>
 
-    <!-- 研究项目页面（已删除1101年注记） -->
+    <!-- 研究项目页面 -->
     <div id="projects" class="page">
         <h2 class="section-title">在研项目</h2>
         <div class="project-list">
-            <div class="project-card">
-                <h3><i class="fas fa-leaf"></i> 黑流树海生态屏障评估</h3>
-                <p>项目编号：SH-η-2024 · 旨在评估树海边缘扩张对周边农田的影响，提出减缓方案。合作单位：国家地理学会。</p>
-            </div>
-            <div class="project-card">
-                <h3><i class="fas fa-microphone-alt"></i> 生物声学监测网络</h3>
-                <p>部署120个声学记录仪，长期跟踪鸟类与哺乳动物多样性的年际变化，已识别21种罕见鸣叫类型。</p>
-            </div>
-            <div class="project-card">
-                <h3><i class="fas fa-tint"></i> 黑流河源头水文示踪</h3>
-                <p>使用氘氧稳定同位素解析树海区内降水-径流-植物水的关系，揭示深层水分利用机制。</p>
-            </div>
+            <div class="project-card"><h3><i class="fas fa-leaf"></i> 黑流树海生态屏障评估</h3><p>项目编号：SH-η-2024 · 旨在评估树海边缘扩张对周边农田的影响，提出减缓方案。合作单位：国家地理学会。</p></div>
+            <div class="project-card"><h3><i class="fas fa-microphone-alt"></i> 生物声学监测网络</h3><p>部署120个声学记录仪，长期跟踪鸟类与哺乳动物多样性的年际变化，已识别21种罕见鸣叫类型。</p></div>
+            <div class="project-card"><h3><i class="fas fa-tint"></i> 黑流河源头水文示踪</h3><p>使用氘氧稳定同位素解析树海区内降水-径流-植物水的关系，揭示深层水分利用机制。</p></div>
         </div>
-        <!-- 已删除1101年历史注记 -->
+        <div class="partner-card">
+            <div class="partner-info"><h3><i class="fas fa-handshake"></i> 战略合作伙伴</h3><p>国家地理学会（National Geographic Society）是全球最大的非营利科学与教育组织之一。自1888年成立以来，始终致力于探索、保护和教育。</p><p style="margin-top: 8px;">OEV与国家地理学会自2021年起开展联合科考项目，共同推动黑流树海生物多样性保护。</p></div>
+            <div class="partner-link"><button class="btn-outline" id="partnerBtn">访问官网 <i class="fas fa-external-link-alt"></i></button></div>
+        </div>
+        <div class="page-bottom-spacer"></div>
     </div>
 
     <!-- 数据资源页面 -->
     <div id="data" class="page">
         <h2 class="section-title">开放数据与工具</h2>
         <div class="dataset-grid">
-            <div class="dataset-item">
-                <i class="fas fa-database"></i>
-                <h3>气候数据库</h3>
-                <p>2017-2026 逐小时气象记录</p>
-                <span class="btn-outline btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">访问</span>
-            </div>
-            <div class="dataset-item">
-                <i class="fas fa-map"></i>
-                <h3>植被覆盖类型图</h3>
-                <p>分辨率10m，更新至2025年</p>
-                <span class="btn-outline btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">查看</span>
-            </div>
-            <div class="dataset-item">
-                <i class="fas fa-chart-bar"></i>
-                <h3>土壤碳通量监测数据</h3>
-                <p>每月汇总，开放申请</p>
-                <span class="btn-outline btn" style="padding: 0.4rem 1rem; font-size: 0.8rem;">请求</span>
-            </div>
+            <div class="dataset-item"><i class="fas fa-database"></i><h3>气候数据库</h3><p>2017-2026 逐小时气象记录</p><button class="data-btn" data-msg="气候数据库正在整理树海边缘气象数据，预计2026年秋季开放。">访问</button></div>
+            <div class="dataset-item"><i class="fas fa-map"></i><h3>植被覆盖类型图</h3><p>分辨率10m，更新至2025年</p><button class="data-btn" data-msg="地图数据需申请许可，请通过“联系我们”页面提交请求。">查看</button></div>
+            <div class="dataset-item"><i class="fas fa-chart-bar"></i><h3>土壤碳通量监测数据</h3><p>每月汇总，开放申请</p><button class="data-btn" data-msg="该数据集受基金会保护，仅限合作研究者访问。">请求</button></div>
         </div>
+        <h2 class="section-title" style="margin-top:1rem;">观测区域地图</h2>
+        <div class="map-card"><div id="map"></div><div class="map-caption"><i class="fas fa-map-marker-alt"></i> 黑流树海核心区参考坐标：南纬17°，西经63.5°（玻利瓦尔圣克鲁斯省北部）。地图可拖动、缩放。</div></div>
     </div>
 
     <!-- 团队页面 -->
     <div id="team" class="page">
         <h2 class="section-title">我们的团队</h2>
         <div class="team-grid">
-            <div class="member-card">
-                <div class="member-avatar"><i class="fas fa-user-circle"></i></div>
-                <h3>Dra. Elena Rojas</h3>
-                <p>首席生态学家</p>
-                <small>森林动态与碳循环</small>
-            </div>
-            <div class="member-card">
-                <div class="member-avatar"><i class="fas fa-user-circle"></i></div>
-                <h3>Dr. Mateo Quispe</h3>
-                <p>水文气候负责人</p>
-                <small>遥感与模型模拟</small>
-            </div>
-            <div class="member-card">
-                <div class="member-avatar"><i class="fas fa-user-circle"></i></div>
-                <h3>MSc. Camila Vargas</h3>
-                <p>植物生态学研究员</p>
-                <small>土壤-植物互作</small>
-            </div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Dr. Elena Rojas"><h3>Dr. Elena Rojas</h3><div class="title">首席生态学家</div><div class="small-note">森林动态与碳循环</div></div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Dr. Mateo Quispe"><h3>Dr. Mateo Quispe</h3><div class="title">水文气候负责人</div><div class="small-note">遥感与模型模拟</div></div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/women/94.jpg" alt="Dr. Camila Vargas"><h3>Dr. Camila Vargas</h3><div class="title">植物生态学研究员</div><div class="small-note">土壤-植物互作</div></div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Dr. Javier Morales"><h3>Dr. Javier Morales</h3><div class="title">遥感与地理信息专家</div><div class="small-note">卫星影像分析</div></div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Dr. Lucia Fernández"><h3>Dr. Lucia Fernández</h3><div class="title">土壤微生物组负责人</div><div class="small-note">微生物群落结构</div></div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/men/22.jpg" alt="Dr. Pablo Herrera"><h3>Dr. Pablo Herrera</h3><div class="title">森林碳汇模型专家</div><div class="small-note">生态系统碳收支</div></div>
+            <div class="member-card"><img src="https://randomuser.me/api/portraits/women/56.jpg" alt="Dr. Ana María Choque"><h3>Dr. Ana María Choque</h3><div class="title">生物声学与行为生态学家</div><div class="small-note">鸟类声学监测</div></div>
+            <div class="member-card"><div class="double-green"><div class="inner-green"><i class="fas fa-user"></i></div></div><h3>Dr. Andrés Paredes</h3><div class="title">前脉根研究组长</div><div class="year">† 2019</div></div>
+            <div class="member-card"><div class="double-green"><div class="inner-green"><i class="fas fa-user"></i></div></div><h3>Dr. Rosa Mamani</h3><div class="title">原声学监测网络负责人</div><div class="year">† 1101</div></div>
+            <div class="member-card"><div class="double-green"><div class="inner-green"><i class="fas fa-user"></i></div></div><h3>Dr. Fernando Limache</h3><div class="title">树海边缘生态学先驱</div><div class="year">† 2017</div></div>
+            <div class="member-card"><div class="double-green"><div class="inner-green"><i class="fas fa-user"></i></div></div><h3>Dr. Silvia Antezana</h3><div class="title">原数据管理与遥感专家</div><div class="year">† 2021</div></div>
+            <div class="member-card"><div class="gray-placeholder"><i class="fas fa-question"></i></div><h3>Dr. ?</h3><div class="title">招募中</div><div class="recruit">期待您的加入</div></div>
         </div>
+        <div class="page-bottom-spacer"></div>
     </div>
 
     <!-- 联系页面 -->
@@ -575,29 +854,28 @@
             <div class="contact-info">
                 <p><i class="fas fa-map-marker-alt"></i> 地址：Camino a los Ríos, Santa Cruz, Bolivia</p>
                 <p><i class="fas fa-envelope"></i> 邮箱：info@oev.bo</p>
-                <p><i class="fas fa-phone"></i> 电话：+591 3 345 6789</p>
+                <p><i class="fas fa-phone"></i> 电话：+591 3345 6789</p>
                 <p><i class="fas fa-clock"></i> 办公时间：周一至周五 9:00 – 17:00 (UTC-4)</p>
             </div>
             <div class="contact-form">
-                <input type="text" id="contactName" placeholder="您的姓名" autocomplete="off">
-                <input type="email" id="contactEmail" placeholder="电子邮箱" autocomplete="off">
+                <input type="text" id="contactName" placeholder="您的姓名">
+                <input type="email" id="contactEmail" placeholder="电子邮箱">
                 <textarea id="contactMsg" rows="3" placeholder="留言内容"></textarea>
                 <button id="sendContactBtn" class="btn">发送消息 <i class="fas fa-paper-plane"></i></button>
-                <div id="formStatus" style="margin-top: 12px; font-size: 0.8rem; color: #5f9e8e;"></div>
+                <div id="formStatus" style="margin-top:12px; font-size:0.8rem; color:#5f9e8e;"></div>
             </div>
         </div>
+        <div class="page-bottom-spacer"></div>
     </div>
 
     <footer id="secretFooter">
-        <p>© 2026 玻利瓦尔生态观测站 — 致力于科学保护与透明研究 | <span style="font-family: monospace;">v2.4.0</span></p>
-        <div class="disclaimer">
-            免责声明：本网站所发布的数据与研究仅用于学术交流与环境保护目的，不代表任何政治立场。对于未经授权访问内部档案的行为，本站保留记录与追责权利。
-        </div>
+        <p>© 2026 玻利瓦尔生态观测站 — 致力于科学保护与透明研究 | v2.4.0</p>
+        <div class="disclaimer">免责声明：本网站所发布的数据与研究仅用于学术交流与环境保护目的，不代表任何政治立场。对于未经授权访问内部档案的行为，本站保留记录与追责权利。</div>
     </footer>
 </div>
 
 <script>
-    // 页面切换逻辑
+    // 页面切换逻辑 + 自动滚动到顶部
     const pages = {
         home: document.getElementById('home'),
         projects: document.getElementById('projects'),
@@ -608,29 +886,22 @@
     const navItems = document.querySelectorAll('.nav-item');
     
     function activatePage(pageId) {
-        Object.values(pages).forEach(page => {
-            if (page) page.classList.remove('active-page');
-        });
-        const activePage = pages[pageId];
-        if (activePage) activePage.classList.add('active-page');
+        Object.values(pages).forEach(p => p.classList.remove('active-page'));
+        pages[pageId].classList.add('active-page');
         navItems.forEach(item => {
-            const link = item.querySelector('a');
-            if (item.getAttribute('data-page') === pageId) {
-                item.classList.add('active');
-                if (link) link.style.borderBottom = '2px solid #1e6f5c';
-            } else {
-                item.classList.remove('active');
-                if (link) link.style.borderBottom = '';
-            }
+            if (item.getAttribute('data-page') === pageId) item.classList.add('active');
+            else item.classList.remove('active');
         });
         history.pushState(null, '', `#${pageId}`);
+        // 重置到顶部
+        window.scrollTo(0, 0);
     }
     
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
-            const pageId = item.getAttribute('data-page');
-            if (pageId && pages[pageId]) activatePage(pageId);
+            const id = item.getAttribute('data-page');
+            if (id && pages[id]) activatePage(id);
         });
     });
     
@@ -642,136 +913,147 @@
     window.addEventListener('popstate', handleHashChange);
     handleHashChange();
 
-    function showSimpleDialog(message, onConfirm, showInput = false, inputPlaceholder = '') {
-        const existing = document.querySelector('.simple-dialog');
-        if (existing) existing.remove();
-
-        const overlay = document.createElement('div');
-        overlay.className = 'simple-dialog';
-
-        const box = document.createElement('div');
-        box.className = 'simple-dialog-box';
-
-        const p = document.createElement('p');
-        p.innerText = message;
-        box.appendChild(p);
-
-        let inputEl = null;
-        if (showInput) {
-            inputEl = document.createElement('input');
-            inputEl.type = 'text';
-            inputEl.placeholder = inputPlaceholder;
-            box.appendChild(inputEl);
-        }
-
-        const btnDiv = document.createElement('div');
-        btnDiv.className = 'simple-dialog-buttons';
-        const cancelBtn = document.createElement('button');
-        cancelBtn.innerText = '取消';
-        const confirmBtn = document.createElement('button');
-        confirmBtn.innerText = '确定';
-        confirmBtn.classList.add('confirm-btn');
-        btnDiv.appendChild(cancelBtn);
-        btnDiv.appendChild(confirmBtn);
-        box.appendChild(btnDiv);
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
-
-        const cleanup = () => overlay.remove();
-
-        confirmBtn.addEventListener('click', () => {
-            const inputValue = inputEl ? inputEl.value : null;
-            cleanup();
-            if (onConfirm) onConfirm(inputValue);
+    // 轮播逻辑
+    const slides = document.querySelectorAll('.carousel-slides .slide');
+    const dotsContainer = document.getElementById('dotsContainer');
+    let currentIndex = 0, autoInterval;
+    function createDots() {
+        slides.forEach((_, idx) => {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (idx === currentIndex) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(idx));
+            dotsContainer.appendChild(dot);
         });
-        cancelBtn.addEventListener('click', () => {
-            cleanup();
-            if (onConfirm) onConfirm(null);
+    }
+    function goToSlide(index) {
+        slides[currentIndex].classList.remove('active');
+        currentIndex = (index + slides.length) % slides.length;
+        slides[currentIndex].classList.add('active');
+        updateDots();
+        resetAuto();
+    }
+    function updateDots() {
+        document.querySelectorAll('.dot').forEach((dot, idx) => {
+            if (idx === currentIndex) dot.classList.add('active');
+            else dot.classList.remove('active');
         });
+    }
+    function nextSlide() { goToSlide(currentIndex + 1); }
+    function prevSlide() { goToSlide(currentIndex - 1); }
+    function resetAuto() { clearInterval(autoInterval); autoInterval = setInterval(nextSlide, 5000); }
+    document.getElementById('nextSlideBtn').addEventListener('click', nextSlide);
+    document.getElementById('prevSlideBtn').addEventListener('click', prevSlide);
+    createDots();
+    resetAuto();
 
-        if (inputEl) {
-            inputEl.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const val = inputEl.value;
-                    cleanup();
-                    if (onConfirm) onConfirm(val);
-                }
-            });
-            inputEl.focus();
+    // 轮播中年度报告按钮
+    document.getElementById('carouselAnnualBtn').addEventListener('click', () => showSimpleDialog('年度报告正在准备中，敬请期待后续版本。', () => {}));
+
+    // 数据资源按钮反馈（弹窗）
+    const dataBtns = document.querySelectorAll('.data-btn');
+    dataBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const msg = btn.getAttribute('data-msg');
+            if (msg) showSimpleDialog(msg, () => {});
+        });
+    });
+
+    // 战略合作伙伴按钮反馈（弹窗 + 跳转演示）
+    document.getElementById('partnerBtn').addEventListener('click', () => {
+        showSimpleDialog('正在跳转至国家地理学会官网（演示模式）', () => {});
+        // 实际可取消注释: window.open('https://www.nationalgeographic.org/', '_blank');
+    });
+
+    // 新闻弹窗
+    const newsDetails = {
+        1: { title: "野外考察：第4次黑流树海样地调查结束", date: "2026.04.15", content: "本次考察历时21天，穿越黑流树海北部和西部边缘。采集土壤样本47份，植物标本120份，并首次在海拔600米处发现一种疑似新种的苔藓（暂定名：黑流曲尾藓）。此外，红外相机记录到多种珍稀哺乳动物活动影像。考察队已安全返回，后续将进行室内分析。" },
+        2: { title: "关于废弃科考站重启的公开征询", date: "2026.03.28", content: "原梅兰德基金会建于1998年的黑流树海观测站已于2015年废弃。OEV计划对其进行修缮并重新启用，作为长期生态监测基地。现向社会公开征询意见，欢迎相关领域专家和公众通过邮箱反馈建议。" },
+        3: { title: "遥感数据揭示异常绿度指数上升", date: "2026.03.10", content: "基于哨兵2号卫星影像分析，2025年黑流树海区域年均NDVI（归一化植被指数）较2020年上升3.7%。植被生长趋势明显，可能与区域降水增加和气温升高有关。研究团队将进一步结合实地数据验证。" },
+        4: { title: "生物声学网络初步成果发布", date: "2026.02.18", content: "项目组在黑流树海布设了120个自动录音点，累计采集音频数据超过2TB。初步识别出鸟类鸣声128种，其中3种为玻利维亚新记录（黄眉哑霸鹟、白眉蚁鸟、淡脚树莺）。声学指数显示树海内部声景完整性较高。" },
+        5: { title: "树海边缘土壤微生物多样性研究启动", date: "2026.01.22", content: "与国际土壤参考中心合作，项目将在树海过渡带设置30个固定样方，分析不同深度土壤的细菌和真菌群落结构。初步取样已发现多个未分类的微生物类群。" },
+        6: { title: "年度开放数据竞赛获奖名单公布", date: "2025.12.10", content: "本届竞赛以“利用遥感数据评估森林碳汇”为主题，共收到参赛作品47份。三等奖由玻利瓦尔大学团队获得，其模型准确预测了树海边缘碳通量动态。获奖成果将在OEV网站公示。" },
+        7: { title: "树海档案解密：1101年“初始回声”事件再评估", date: "2025.11.01", content: "近期，基金会解密了部分1101年10月14日事件的历史记录。根据当时的调查笔记，树海深处曾出现持续23分钟的异常低频脉冲，12名调查员短暂失联。后续分析认为这可能与树海深层脉根活动有关，但具体机制尚不明确。该事件被当地土著称为“第一回声日”。（注：本新闻内容仅为历史信息介绍，不涉及超自然现象。）" }
+    };
+    function showNewsModal(id) {
+        const d = newsDetails[id];
+        if (!d) return;
+        const modal = document.createElement('div');
+        modal.className = 'news-modal';
+        modal.innerHTML = `<div class="news-modal-box"><div class="close-modal">&times;</div><h3>${d.title}</h3><div class="modal-date">${d.date}</div><div class="modal-content">${d.content.replace(/\n/g, '<br>')}</div></div>`;
+        document.body.appendChild(modal);
+        modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    }
+    document.querySelectorAll('.news-card').forEach(card => {
+        const nid = card.getAttribute('data-news');
+        if (nid) card.addEventListener('click', () => showNewsModal(parseInt(nid)));
+    });
+
+    // 地图
+    let map, marker;
+    function initMap() {
+        if (map) return;
+        map = L.map('map').setView([-17.0, -63.5], 7);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB', subdomains: 'abcd' }).addTo(map);
+        marker = L.marker([-17.0, -63.5]).addTo(map).bindPopup('黑流树海观测站（参考位置）').openPopup();
+    }
+    const dataObs = new MutationObserver(() => {
+        if (document.getElementById('data').classList.contains('active-page')) {
+            setTimeout(() => { if (!map) initMap(); else map.invalidateSize(); }, 100);
         }
+    });
+    dataObs.observe(document.getElementById('data'), { attributes: true, attributeFilter: ['class'] });
+    if (document.getElementById('data').classList.contains('active-page')) setTimeout(initMap, 200);
+
+    // 通用弹窗函数
+    function showSimpleDialog(msg, onConfirm, showInput = false, ph = '') {
+        const exist = document.querySelector('.simple-dialog');
+        if (exist) exist.remove();
+        const ov = document.createElement('div'); ov.className = 'simple-dialog';
+        const box = document.createElement('div'); box.className = 'simple-dialog-box';
+        const p = document.createElement('p'); p.innerText = msg; box.appendChild(p);
+        let inp = null;
+        if (showInput) { inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = ph; box.appendChild(inp); }
+        const btns = document.createElement('div'); btns.className = 'simple-dialog-buttons';
+        const cancel = document.createElement('button'); cancel.innerText = '取消';
+        const confirm = document.createElement('button'); confirm.innerText = '确定'; confirm.classList.add('confirm-btn');
+        btns.appendChild(cancel); btns.appendChild(confirm); box.appendChild(btns); ov.appendChild(box); document.body.appendChild(ov);
+        const clean = () => ov.remove();
+        confirm.addEventListener('click', () => { const val = inp ? inp.value : null; clean(); if (onConfirm) onConfirm(val); });
+        cancel.addEventListener('click', () => { clean(); if (onConfirm) onConfirm(null); });
+        if (inp) inp.addEventListener('keypress', e => { if (e.key === 'Enter') { const val = inp.value; clean(); if (onConfirm) onConfirm(val); } });
     }
 
-    // 联系我们表单 - 隐晦提示，末尾加上 ——07
+    // 联系表单
     const sendBtn = document.getElementById('sendContactBtn');
-    const nameInput = document.getElementById('contactName');
-    const emailInput = document.getElementById('contactEmail');
-    const msgInput = document.getElementById('contactMsg');
-    const formStatus = document.getElementById('formStatus');
-
-    sendBtn.addEventListener('click', (e) => {
+    const nameInp = document.getElementById('contactName'), emailInp = document.getElementById('contactEmail'), msgInp = document.getElementById('contactMsg'), formStat = document.getElementById('formStatus');
+    sendBtn.addEventListener('click', e => {
         e.preventDefault();
-        if (!nameInput.value.trim() || !emailInput.value.trim() || !msgInput.value.trim()) {
-            showSimpleDialog('请完整填写所有字段。', () => {});
-            return;
-        }
-        sendBtn.disabled = true;
-        sendBtn.innerHTML = '发送中...';
-        formStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 正在传输...';
-        
+        if (!nameInp.value.trim() || !emailInp.value.trim() || !msgInp.value.trim()) { showSimpleDialog('请完整填写所有字段。', () => {}); return; }
+        sendBtn.disabled = true; sendBtn.innerHTML = '发送中...'; formStat.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 正在传输...';
         setTimeout(() => {
-            sendBtn.disabled = false;
-            sendBtn.innerHTML = '发送消息 <i class="fas fa-paper-plane"></i>';
-            formStatus.innerHTML = '<span style="color:#6dab96;">✓ 消息已归档。</span>';
-            nameInput.value = '';
-            emailInput.value = '';
-            msgInput.value = '';
-            
-            // 隐晦提示：末尾加上 ——07
-            showSimpleDialog(
-                '消息已发送至观测站。\n\n档案室的某个角落里，有人写下了“那个日子”的完整数字。也许它能解开某些封闭的文档。——07',
-                () => {}
-            );
-            setTimeout(() => formStatus.innerHTML = '', 3000);
+            sendBtn.disabled = false; sendBtn.innerHTML = '发送消息 <i class="fas fa-paper-plane"></i>'; formStat.innerHTML = '<span style="color:#6dab96;">✓ 消息已归档。</span>';
+            nameInp.value = ''; emailInp.value = ''; msgInp.value = '';
+            showSimpleDialog('消息已发送至观测站。\n\n档案室的某个角落里，有人写下了“那个日子”的完整数字。也许它能解开某些封闭的文档。——07', () => {});
+            setTimeout(() => formStat.innerHTML = '', 3000);
         }, 1000);
     });
 
-    // 页脚三次点击，密码 11011014
-    let clickCount = 0;
-    let clickTimer = null;
-    const footer = document.getElementById('secretFooter');
-
-    footer.addEventListener('click', () => {
-        clickCount++;
-        if (clickTimer) clearTimeout(clickTimer);
-        if (clickCount === 3) {
-            showSimpleDialog(
-                '内部档案系统授权',
-                (inputCode) => {
-                    if (inputCode === null) return;
-                    if (inputCode === "11011014") {
-                        showSimpleDialog('授权通过。即将进入加密分区。', () => {
-                            alert("演示模式：后续将跳转到黑流树海档案库");
-                            // window.location.href = "inner-arg.html";
-                        });
-                    } else if (inputCode !== null && inputCode !== "") {
-                        showSimpleDialog('访问被拒绝 · 事件已记录', () => {});
-                        console.log("[OEV] 未授权档案访问尝试");
-                        document.body.style.backgroundColor = "#2c1e1e";
-                        setTimeout(() => document.body.style.backgroundColor = "", 200);
-                    }
-                },
-                true,
-                '输入授权码'
-            );
-            clickCount = 0;
-        } else {
-            clickTimer = setTimeout(() => {
-                clickCount = 0;
-            }, 800);
-        }
+    // 页脚三次点击密码
+    let clickC = 0, timer = null;
+    document.getElementById('secretFooter').addEventListener('click', () => {
+        clickC++;
+        if (timer) clearTimeout(timer);
+        if (clickC === 3) {
+            showSimpleDialog('内部档案系统授权', (code) => {
+                if (code === null) return;
+                if (code === "11011014") showSimpleDialog('授权通过。即将进入加密分区。', () => alert("演示模式：后续将跳转到黑流树海档案库"));
+                else if (code !== "") showSimpleDialog('访问被拒绝 · 事件已记录', () => {});
+            }, true, '输入授权码');
+            clickC = 0;
+        } else timer = setTimeout(() => { clickC = 0; }, 800);
     });
-
-    console.log("🌿 OEV 公开站点 | 某些记录需要完整的钥匙。");
 </script>
 </body>
 </html>
